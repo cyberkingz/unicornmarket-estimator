@@ -15,6 +15,8 @@ import { Header } from '@/components/saas-value/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle2, AlertTriangleIcon } from 'lucide-react';
 
 
 export default function SaasValuePage() {
@@ -41,10 +43,8 @@ export default function SaasValuePage() {
       // Benchmark Comparison
       setIsBenchmarking(true);
       try {
-        // Construct BenchmarkComparisonInput using all fields from ValuationEstimationInput
-        // and the estimatedAverageValuation from its output.
         const benchmarkInput: BenchmarkComparisonInput = {
-          ...data, // Includes all new fields: arr, newBizGrowth, expansionGrowth, churn, nrr, grossMargin, cac, ltvCac, s&m, r&d, stage, industry, market
+          ...data, 
           estimatedAverageValuation: valuationData.averageValuation,
         };
         const benchmarkOut = await benchmarkComparison(benchmarkInput);
@@ -108,7 +108,6 @@ export default function SaasValuePage() {
                   <div className="p-4 border rounded-lg"><Skeleton className="h-6 w-1/2 mx-auto mb-2" data-ai-hint="label placeholder" /><Skeleton className="h-10 w-3/4 mx-auto" data-ai-hint="value placeholder" /></div>
                 </div>
                 <div className="text-center">
-                    {/* Skeleton for Implied ARR Multiple Card */}
                     <div className="inline-block p-4 rounded-lg shadow-sm max-w-xs mx-auto border border-border bg-card/50">
                         <div className="flex items-center justify-center mb-2">
                             <Skeleton className="h-5 w-5 mr-2" data-ai-hint="icon placeholder" />
@@ -158,13 +157,28 @@ export default function SaasValuePage() {
                <Skeleton className="h-8 w-3/5" data-ai-hint="title placeholder" />
                <Skeleton className="h-4 w-4/5 mt-1" data-ai-hint="description placeholder" />
              </CardHeader>
-             <CardContent className="space-y-4">
-               <Skeleton className="h-6 w-full" data-ai-hint="paragraph line" />
-               <Skeleton className="h-6 w-11/12" data-ai-hint="paragraph line" />
-               <Skeleton className="h-6 w-full mt-4" data-ai-hint="list item" />
-               <Skeleton className="h-6 w-5/6" data-ai-hint="list item" />
-               <Skeleton className="h-6 w-full mt-4" data-ai-hint="list item" />
-               <Skeleton className="h-6 w-10/12" data-ai-hint="list item" />
+             <CardContent className="space-y-6">
+               <div>
+                <Skeleton className="h-6 w-1/3 mb-2" data-ai-hint="subheading placeholder" />
+                <Skeleton className="h-4 w-full" data-ai-hint="paragraph line" />
+                <Skeleton className="h-4 w-11/12 mt-1" data-ai-hint="paragraph line" />
+               </div>
+                <Alert variant="default" className="bg-green-50/50 border-green-300/50 dark:bg-green-900/10 dark:border-green-700/30">
+                    <CheckCircle2 className="h-5 w-5 text-green-600/50 dark:text-green-400/50" />
+                    <AlertTitle><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
+                    <AlertDescription className="space-y-2 mt-2">
+                        <Skeleton className="h-4 w-full" data-ai-hint="list item" />
+                        <Skeleton className="h-4 w-5/6" data-ai-hint="list item" />
+                    </AlertDescription>
+                </Alert>
+                 <Alert variant="destructive" className="bg-amber-50/50 border-amber-300/50 dark:bg-amber-900/10 dark:border-amber-700/30">
+                    <AlertTriangleIcon className="h-5 w-5 text-amber-600/50 dark:text-amber-400/50" />
+                    <AlertTitle><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
+                    <AlertDescription className="space-y-2 mt-2">
+                        <Skeleton className="h-4 w-full" data-ai-hint="list item" />
+                        <Skeleton className="h-4 w-10/12" data-ai-hint="list item" />
+                    </AlertDescription>
+                </Alert>
              </CardContent>
            </Card>
         )}

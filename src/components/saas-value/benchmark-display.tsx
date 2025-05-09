@@ -1,7 +1,8 @@
 // src/components/saas-value/benchmark-display.tsx
 import type { BenchmarkComparisonOutput } from '@/ai/flows/benchmark-comparison';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Scale, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Scale, TrendingUp, AlertTriangleIcon, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export default function BenchmarkDisplay({
   benchmarkAnalysis,
@@ -24,37 +25,43 @@ export default function BenchmarkDisplay({
         </div>
 
         {strengthAreas && strengthAreas.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2 text-green-600 flex items-center">
+          <Alert variant="default" className="bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-700">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <AlertTitle className="text-lg font-semibold text-green-700 dark:text-green-300 flex items-center">
               <TrendingUp className="mr-2 h-6 w-6" />
-              Key Strength Areas:
-            </h3>
-            <ul className="list-none space-y-2 pl-0">
-              {strengthAreas.map((strength, index) => (
-                <li key={`strength-${index}`} className="flex items-start text-md text-foreground/80">
-                  <CheckCircle2 className="mr-2 h-5 w-5 text-green-500 shrink-0 mt-1" />
-                  <span>{strength}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+              Key Strength Areas
+            </AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-400/90">
+              <ul className="list-none space-y-2 pl-0 mt-2">
+                {strengthAreas.map((strength, index) => (
+                  <li key={`strength-${index}`} className="flex items-start text-md">
+                    <CheckCircle2 className="mr-2 h-5 w-5 text-green-500 dark:text-green-400 shrink-0 mt-1" />
+                    <span>{strength}</span>
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
         )}
 
         {improvementAreas && improvementAreas.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2 text-amber-600 flex items-center">
-              <AlertTriangle className="mr-2 h-6 w-6" />
-              Potential Improvement Areas:
-            </h3>
-            <ul className="list-none space-y-2 pl-0">
-              {improvementAreas.map((improvement, index) => (
-                <li key={`improvement-${index}`} className="flex items-start text-md text-foreground/80">
-                  <AlertTriangle className="mr-2 h-5 w-5 text-amber-500 shrink-0 mt-1" />
-                  <span>{improvement}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Alert variant="destructive" className="bg-amber-50 border-amber-300 dark:bg-amber-900/30 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+             <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-lg font-semibold text-amber-700 dark:text-amber-300 flex items-center">
+              <AlertTriangleIcon className="mr-2 h-6 w-6" />
+              Potential Improvement Areas
+            </AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-400/90">
+              <ul className="list-none space-y-2 pl-0 mt-2">
+                {improvementAreas.map((improvement, index) => (
+                  <li key={`improvement-${index}`} className="flex items-start text-md">
+                    <AlertTriangleIcon className="mr-2 h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-1" />
+                    <span>{improvement}</span>
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>
