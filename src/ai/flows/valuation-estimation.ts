@@ -19,10 +19,19 @@ const ValuationEstimationInputSchema = z.object({
   churnRate: z.number().describe('Annual churn rate (as a decimal, e.g., 0.05 for 5%).'),
   netRevenueRetention: z.coerce.number().min(0).max(3).describe('Net Revenue Retention (NRR) or Dollar-Based Net Expansion Rate (DBNER) as a decimal (e.g., 1.1 for 110%).'),
   grossMargin: z.number().describe('Gross margin (as a decimal, e.g., 0.8 for 80%).'),
+  
+  costOfGoodsSold: z.coerce.number().min(0).optional().describe('Optional: Annual Cost of Goods Sold (COGS) in USD. Includes hosting, third-party software, customer support directly related to service delivery.'),
+  generalAdministrativeSpend: z.coerce.number().min(0).optional().describe('Optional: Annual General & Administrative (G&A) spend in USD (e.g., salaries not in S&M/R&D, rent, utilities, legal).'),
+  ebitda: z.coerce.number().optional().describe('Optional: Annual Earnings Before Interest, Taxes, Depreciation, and Amortization (EBITDA) in USD. Can be negative.'),
+
   customerAcquisitionCost: z.coerce.number().positive().describe('Average Customer Acquisition Cost (CAC) in USD.'),
   ltvToCacRatio: z.coerce.number().positive().describe('Customer Lifetime Value (LTV) to CAC ratio (e.g., 3 for 3:1).'),
   salesMarketingSpendPercentage: z.coerce.number().min(0).max(1).describe('Sales & Marketing spend as a percentage of ARR (e.g., 0.4 for 40%).'),
   researchDevelopmentSpendPercentage: z.coerce.number().min(0).max(1).describe('Research & Development spend as a percentage of ARR (e.g., 0.2 for 20%).'),
+
+  customerAcquisitionChannels: z.string().optional().describe('Optional: Main customer acquisition channels (e.g., Google Ads, SEO, Content Marketing, Sales Team). Listing key channels and their approximate contribution can provide more context.'),
+  marketingSpendBreakdown: z.string().optional().describe('Optional: Breakdown of marketing spend across key channels or categories. This can give insights into spend efficiency and channel dependency.'),
+  
   fundingStage: z.string().optional().describe('Current funding stage (e.g., Bootstrap, Seed, Series A, Growth Stage, Public).'),
   industryVertical: z.string().optional().describe('Primary industry vertical (e.g., FinTech, HealthTech, Enterprise SaaS, MarTech).'),
   targetMarket: z.string().optional().describe('Primary target market segment (e.g., SMB, Mid-Market, Enterprise).'),
@@ -34,7 +43,7 @@ const ValuationEstimationOutputSchema = z.object({
   highValuation: z.number().describe('High end of the estimated valuation range in USD.'),
   averageValuation: z.number().describe('Average of the estimated valuation range in USD.'),
   impliedARRMultiple: z.number().describe('Implied ARR multiple (Average Valuation / ARR).'),
-  analysis: z.string().describe('Qualitative analysis supporting the valuation range, detailing how key metrics (ARR, growth components, NRR, margins, CAC, LTV/CAC, spend efficiency, funding stage, industry, market) contribute to the estimate. Discuss typical ranges and how the company\'s metrics compare.'),
+  analysis: z.string().describe('Qualitative analysis supporting the valuation range, detailing how key metrics (ARR, growth components, NRR, margins, COGS, G&A, EBITDA, CAC, LTV/CAC, spend efficiency, acquisition channels, funding stage, industry, market) contribute to the estimate. Discuss typical ranges and how the company\'s metrics compare.'),
 });
 export type ValuationEstimationOutput = z.infer<typeof ValuationEstimationOutputSchema>;
 
@@ -56,10 +65,15 @@ Company Details & Metrics:
 - Annual Churn Rate: {{{churnRate}}} (decimal, e.g., 0.05 for 5%)
 - Net Revenue Retention (NRR/DBNER): {{{netRevenueRetention}}} (decimal, e.g., 1.1 for 110%)
 - Gross Margin: {{{grossMargin}}} (decimal, e.g., 0.8 for 80%)
+{{#if costOfGoodsSold}}- Cost of Goods Sold (COGS): {{{costOfGoodsSold}}} USD (Optional){{/if}}
+{{#if generalAdministrativeSpend}}- General & Administrative (G&A) Spend: {{{generalAdministrativeSpend}}} USD (Optional){{/if}}
+{{#if ebitda}}- EBITDA: {{{ebitda}}} USD (Optional){{/if}}
 - Customer Acquisition Cost (CAC): {{{customerAcquisitionCost}}} USD
 - LTV to CAC Ratio: {{{ltvToCacRatio}}} (e.g., 3 for 3:1)
 - Sales & Marketing Spend (% of ARR): {{{salesMarketingSpendPercentage}}} (decimal, e.g., 0.4 for 40%)
 - Research & Development Spend (% of ARR): {{{researchDevelopmentSpendPercentage}}} (decimal, e.g., 0.2 for 20%)
+{{#if customerAcquisitionChannels}}- Customer Acquisition Channels: {{{customerAcquisitionChannels}}} (Optional){{/if}}
+{{#if marketingSpendBreakdown}}- Marketing Spend Breakdown: {{{marketingSpendBreakdown}}} (Optional){{/if}}
 {{#if fundingStage}}- Funding Stage: {{{fundingStage}}}{{/if}}
 {{#if industryVertical}}- Industry Vertical: {{{industryVertical}}}{{/if}}
 {{#if targetMarket}}- Target Market: {{{targetMarket}}}{{/if}}
@@ -71,11 +85,16 @@ Your analysis should be detailed, covering:
     *   **ARR Size**: Contextualize the ARR.
     *   **Growth Dynamics**: Discuss the combined impact of new business vs. expansion ARR growth. Higher, more efficient growth (strong expansion) is positive.
     *   **Retention & Churn**: Analyze NRR and churn. NRR > 100% is a strong positive. High churn is a major risk.
-    *   **Profitability**: Discuss gross margin. Higher is better.
+    *   **Profitability (Gross & Net)**: 
+        *   Discuss gross margin. Higher is better.
+        *   If COGS is provided, comment on its relation to gross margin.
+        *   If G&A spend is provided, discuss its impact on operational leverage.
+        *   If EBITDA is provided, analyze its level (positive, negative, breakeven) and implications for cash flow and sustainability. Strong EBITDA margins, especially with growth, are highly valued.
     *   **Unit Economics**: Evaluate CAC and LTV/CAC ratio. A ratio > 3 is generally good. High CAC can be a concern.
     *   **Spend Efficiency**: Comment on S&M and R&D spend relative to growth and benchmarks.
-    *   **Contextual Factors**: If provided, briefly discuss how funding stage, industry vertical, and target market might influence valuation expectations (e.g., high-growth tech verticals might command higher multiples).
-3.  **Valuation Multiples**: Calculate and include the implied ARR multiple (Average Valuation / ARR). Briefly touch upon typical ARR multiples for companies with similar profiles, if possible, to justify this multiple.
+    *   **Customer Acquisition Strategy** (if channels/breakdown provided): Briefly comment on the perceived strength, diversity, or scalability of the acquisition channels. Does the spend breakdown seem efficient?
+    *   **Contextual Factors**: If provided, briefly discuss how funding stage, industry vertical, and target market might influence valuation expectations (e.g., high-growth tech verticals might command higher multiples, different stages have different risk profiles).
+3.  **Valuation Multiples**: Calculate and include the implied ARR multiple (Average Valuation / ARR). Briefly touch upon typical ARR multiples for companies with similar profiles, if possible, to justify this multiple. Consider how the detailed financial picture (EBITDA, margins) might affect this multiple compared to a pure ARR-based view.
 
 Format your output as a JSON object with the following keys: lowValuation, highValuation, averageValuation, impliedARRMultiple, analysis. All currency values should be in USD. The impliedARRMultiple should be a number.
 `,
