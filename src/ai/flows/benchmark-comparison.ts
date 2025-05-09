@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const BenchmarkComparisonInputSchema = z.object({
+  softwareName: z.string().optional().describe('The name of the SaaS software or company.'),
   arr: z.number().describe('Annual Recurring Revenue (ARR) in USD.'),
   newBusinessARRGrowthRate: z.coerce.number().min(0).max(5).describe('Annual growth rate from new business (e.g., 0.25 for 25%).'),
   expansionARRGrowthRate: z.coerce.number().min(-1).max(5).describe('Annual growth rate from existing customer expansion/upsell (e.g., 0.1 for 10%). Can be negative for contraction.'),
@@ -46,7 +47,8 @@ const benchmarkComparisonPrompt = ai.definePrompt({
   output: {schema: BenchmarkComparisonOutputSchema},
   prompt: `You are a seasoned SaaS industry analyst. Your task is to provide an in-depth competitive benchmark analysis for a SaaS company based on the following metrics and its AI-estimated valuation.
 
-Company Metrics:
+Company Details & Metrics:
+{{#if softwareName}}- Software Name: {{{softwareName}}}{{/if}}
 - Annual Recurring Revenue (ARR): {{{arr}}} USD
 - New Business ARR Growth Rate (annual): {{{newBusinessARRGrowthRate}}}
 - Expansion ARR Growth Rate (annual): {{{expansionARRGrowthRate}}}
@@ -63,7 +65,7 @@ Company Metrics:
 - Estimated Average Valuation: {{{estimatedAverageValuation}}} USD
 
 Instructions:
-1.  **Overall Benchmark Analysis**: Provide a concise qualitative analysis comparing the company's key metrics (ARR, New/Expansion Growth, NRR, Churn, Gross Margin, CAC, LTV/CAC, S&M Spend, R&D Spend) and its estimated valuation against typical industry benchmarks for SaaS companies, considering its funding stage, industry, and target market if provided. For each metric, state whether it's generally strong, average, or an area for concern. Explain how these factors collectively influence its valuation relative to peers.
+1.  **Overall Benchmark Analysis**: Provide a concise qualitative analysis comparing the company's key metrics (ARR, New/Expansion Growth, NRR, Churn, Gross Margin, CAC, LTV/CAC, S&M Spend, R&D Spend) and its estimated valuation against typical industry benchmarks for SaaS companies, considering its funding stage, industry, and target market if provided. If a software name is provided, you can refer to the company by its name. For each metric, state whether it's generally strong, average, or an area for concern. Explain how these factors collectively influence its valuation relative to peers.
 2.  **Strength Areas**: Identify 2-4 key strength areas. These should be metrics or aspects where the company performs notably well compared to general industry expectations for its profile.
 3.  **Improvement Areas**: Identify 2-4 key areas where the company could improve relative to benchmarks. These should be actionable or highlight potential risks.
 
@@ -87,4 +89,3 @@ const benchmarkComparisonFlow = ai.defineFlow(
     return output;
   }
 );
-

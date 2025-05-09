@@ -19,10 +19,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  DollarSign, Percent, TrendingUp, TrendingDown, Trash2, Users, Briefcase, Target, FileText, Cpu, ShoppingCart, Handshake
+  DollarSign, Percent, TrendingUp, TrendingDown, Trash2, Users, Briefcase, Target, FileText, Cpu, ShoppingCart, Handshake, Building2, Landmark
 } from 'lucide-react';
 
 const formSchema = z.object({
+  softwareName: z.string().min(1, {message: 'Software name is required.'}).max(100, {message: 'Software name must be 100 characters or less.'}).describe('The name of the SaaS software/company'),
   arr: z.coerce.number().positive({ message: 'ARR must be a positive number.' }).describe('Annual Recurring Revenue (USD)'),
   newBusinessARRGrowthRate: z.coerce.number().min(0, { message: 'New business ARR growth rate cannot be negative.' }).max(5, { message: 'Rate seems too high (max 500%). Use decimal, e.g., 0.2 for 20%.' }).describe('Annual growth rate from new business (e.g., 0.2 for 20%)'),
   expansionARRGrowthRate: z.coerce.number().min(-1, { message: 'Expansion ARR growth rate can be negative (contraction) but not less than -100%.' }).max(5, { message: 'Rate seems too high (max 500%). Use decimal, e.g., 0.1 for 10%.' }).describe('Annual growth rate from existing customer expansion/upsell (e.g., 0.1 for 10%)'),
@@ -47,6 +48,7 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      softwareName: 'MySaaSApp',
       arr: 1000000,
       newBusinessARRGrowthRate: 0.20,
       expansionARRGrowthRate: 0.10,
@@ -64,7 +66,7 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
   });
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
-    onSubmit(values);
+    onSubmit(values as ValuationEstimationInput); // Cast is safe due to schema alignment
   }
 
   function handleClearForm() {
@@ -74,12 +76,30 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
   return (
     <Card className="shadow-lg rounded-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold">Company Metrics</CardTitle>
-        <CardDescription>Enter your SaaS company's key financial and operational metrics to estimate its valuation.</CardDescription>
+        <CardTitle className="text-2xl font-semibold">Company &amp; Financial Metrics</CardTitle>
+        <CardDescription>Enter your SaaS company's details and key metrics to estimate its valuation.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="softwareName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">Software Name</FormLabel>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="text" placeholder="e.g., Acme SaaS Platform" {...field} className="pl-10" aria-label="Software Name" />
+                    </FormControl>
+                  </div>
+                  <FormDescription>The name of your SaaS software or company.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
               {/* Financial Metrics */}
               <FormField
@@ -269,7 +289,7 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
                   <FormItem>
                     <FormLabel className="text-base">Funding Stage (Optional)</FormLabel>
                      <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <FormControl>
                         <Input type="text" placeholder="e.g., Series A, Bootstrap" {...field} className="pl-10" aria-label="Funding Stage" />
                       </FormControl>
@@ -300,7 +320,7 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
                 control={form.control}
                 name="targetMarket"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-2"> {/* Make this span full width on medium screens if it's the last in a row */}
                     <FormLabel className="text-base">Target Market (Optional)</FormLabel>
                     <div className="relative">
                       <Target className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -340,7 +360,7 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
                     Estimating...
                   </>
                 ) : (
-                  'Estimate Valuation'
+                  'Estimate Valuation & Analyze Benchmarks'
                 )}
               </Button>
             </div>
@@ -350,4 +370,3 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
     </Card>
   );
 }
-

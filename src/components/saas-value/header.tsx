@@ -12,7 +12,7 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-3 text-lg text-muted-foreground">
-        Estimate your SaaS company's valuation with AI-powered insights.
+        Your AI-Powered SaaS Valuation &amp; Benchmarking Partner.
       </p>
     </header>
   );
