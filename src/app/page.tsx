@@ -11,17 +11,19 @@ import DataInputForm from '@/components/saas-value/data-input-form';
 import ValuationDisplay from '@/components/saas-value/valuation-display';
 import AnalysisDisplay from '@/components/saas-value/analysis-display';
 import BenchmarkDisplay from '@/components/saas-value/benchmark-display';
+import HistoricalARRChart from '@/components/saas-value/historical-arr-chart';
 import { Header } from '@/components/saas-value/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, AlertTriangleIcon } from 'lucide-react';
+import { CheckCircle2, AlertTriangleIcon, TrendingUp } from 'lucide-react';
 
 
 export default function SaasValuePage() {
   const [valuationResult, setValuationResult] = useState<ValuationEstimationOutput | null>(null);
   const [benchmarkResult, setBenchmarkResult] = useState<BenchmarkComparisonOutput | null>(null);
+  const [inputDataForChart, setInputDataForChart] = useState<ValuationEstimationInput['historicalFinancials'] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isBenchmarking, setIsBenchmarking] = useState(false);
   const { toast } = useToast();
@@ -30,6 +32,7 @@ export default function SaasValuePage() {
     setIsLoading(true);
     setValuationResult(null);
     setBenchmarkResult(null); 
+    setInputDataForChart(data.historicalFinancials);
     
     try {
       // Valuation Estimation
@@ -133,6 +136,21 @@ export default function SaasValuePage() {
                 <Skeleton className="h-6 w-full" data-ai-hint="paragraph line" />
                 <Skeleton className="h-6 w-full" data-ai-hint="paragraph line" />
                 <Skeleton className="h-6 w-5/6" data-ai-hint="paragraph line" />
+                 <Skeleton className="h-6 w-full mt-2" data-ai-hint="paragraph line" />
+                <Skeleton className="h-6 w-3/4" data-ai-hint="paragraph line" />
+              </CardContent>
+            </Card>
+            {/* Historical Chart Skeleton */}
+             <Card className="shadow-lg rounded-xl mt-8">
+              <CardHeader>
+                <div className="flex items-center">
+                  <TrendingUp className="mr-2 h-6 w-6 text-muted-foreground/50" />
+                  <Skeleton className="h-7 w-2/5" data-ai-hint="chart title" />
+                </div>
+                <Skeleton className="h-4 w-3/5 mt-1" data-ai-hint="chart description" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[300px] w-full" data-ai-hint="chart placeholder" />
               </CardContent>
             </Card>
           </div>
@@ -147,6 +165,9 @@ export default function SaasValuePage() {
               impliedARRMultiple={valuationResult.impliedARRMultiple}
             />
             <AnalysisDisplay analysis={valuationResult.analysis} />
+            {inputDataForChart && inputDataForChart.length > 0 && (
+              <HistoricalARRChart historicalData={inputDataForChart} />
+            )}
           </div>
         )}
 
@@ -154,7 +175,10 @@ export default function SaasValuePage() {
         {!isLoading && valuationResult && isBenchmarking && (
            <Card className="shadow-lg rounded-xl mt-8">
              <CardHeader>
-               <Skeleton className="h-8 w-3/5" data-ai-hint="title placeholder" />
+                <div className="flex items-center">
+                    <Skeleton className="h-7 w-7 mr-2" data-ai-hint="icon scale" />
+                    <Skeleton className="h-8 w-3/5" data-ai-hint="title placeholder" />
+                </div>
                <Skeleton className="h-4 w-4/5 mt-1" data-ai-hint="description placeholder" />
              </CardHeader>
              <CardContent className="space-y-6">
@@ -162,19 +186,20 @@ export default function SaasValuePage() {
                 <Skeleton className="h-6 w-1/3 mb-2" data-ai-hint="subheading placeholder" />
                 <Skeleton className="h-4 w-full" data-ai-hint="paragraph line" />
                 <Skeleton className="h-4 w-11/12 mt-1" data-ai-hint="paragraph line" />
+                <Skeleton className="h-4 w-full mt-1" data-ai-hint="paragraph line" />
                </div>
                 <Alert variant="default" className="bg-green-50/50 border-green-300/50 dark:bg-green-900/10 dark:border-green-700/30">
-                    <CheckCircle2 className="h-5 w-5 text-green-600/50 dark:text-green-400/50" />
-                    <AlertTitle><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
-                    <AlertDescription className="space-y-2 mt-2">
+                    <Skeleton className="h-5 w-5 mr-2 absolute left-4 top-4" data-ai-hint="icon checkmark" />
+                    <AlertTitle className="ml-7"><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
+                    <AlertDescription className="space-y-2 mt-2 ml-7">
                         <Skeleton className="h-4 w-full" data-ai-hint="list item" />
                         <Skeleton className="h-4 w-5/6" data-ai-hint="list item" />
                     </AlertDescription>
                 </Alert>
                  <Alert variant="destructive" className="bg-amber-50/50 border-amber-300/50 dark:bg-amber-900/10 dark:border-amber-700/30">
-                    <AlertTriangleIcon className="h-5 w-5 text-amber-600/50 dark:text-amber-400/50" />
-                    <AlertTitle><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
-                    <AlertDescription className="space-y-2 mt-2">
+                    <Skeleton className="h-5 w-5 mr-2 absolute left-4 top-4" data-ai-hint="icon warning" />
+                    <AlertTitle className="ml-7"><Skeleton className="h-6 w-2/5" data-ai-hint="alert title" /></AlertTitle>
+                    <AlertDescription className="space-y-2 mt-2 ml-7">
                         <Skeleton className="h-4 w-full" data-ai-hint="list item" />
                         <Skeleton className="h-4 w-10/12" data-ai-hint="list item" />
                     </AlertDescription>

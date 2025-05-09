@@ -32,7 +32,7 @@ const ValuationEstimationInputSchema = z.object({
   grossMargin: z.number().describe('Current gross margin (as a decimal, e.g., 0.8 for 80%).'),
   
   // Historical Financial Data (Optional)
-  historicalFinancials: z.array(HistoricalFinancialItemSchema).max(5, {message: "Please provide data for up to the last 5 years."}).optional().describe('Optional: Array of historical financial data for up to 5 previous years.'),
+  historicalFinancials: z.array(HistoricalFinancialItemSchema).max(5, "Please provide data for up to the last 5 years.").optional().describe('Optional: Array of historical financial data for up to 5 previous years.'),
 
   // Detailed P&L / Operational Costs (Optional)
   costOfGoodsSold: z.coerce.number().min(0).optional().describe('Optional: Annual Cost of Goods Sold (COGS) in USD. Includes hosting, third-party software, customer support directly related to service delivery.'),
@@ -90,7 +90,7 @@ const ValuationEstimationOutputSchema = z.object({
   highValuation: z.number().describe('High end of the estimated valuation range in USD.'),
   averageValuation: z.number().describe('Average of the estimated valuation range in USD.'),
   impliedARRMultiple: z.number().describe('Implied ARR multiple (Average Valuation / ARR).'),
-  analysis: z.string().describe('Comprehensive qualitative analysis supporting the valuation range. This should detail how current key metrics (ARR, growth components, NRR, margins, CAC, LTV/CAC, spend efficiency), historical trends (if provided), customer insights (segmentation, pricing, sales cycle), operational aspects (team size, P&L structure, COGS, G&A, EBITDA), capital position (burn, runway, debt, equity), product engagement, and contextual factors (funding stage, industry, market, geography) contribute to the estimate. Discuss typical ranges and how the company\'s metrics compare. Highlight specific strengths and weaknesses derived from the input data that significantly influence the valuation.'),
+  analysis: z.string().describe('Comprehensive qualitative analysis supporting the valuation range. This should detail how current key metrics (ARR, growth components, NRR, margins, CAC, LTV/CAC, spend efficiency), historical trends (if provided), customer insights (segmentation, pricing, sales cycle), operational aspects (team size, P&L structure, COGS, G&A, EBITDA), capital position (burn, runway, debt, equity), product engagement, and contextual factors (funding stage, industry, market, geography) contribute to the estimate. Discuss typical ranges and how the company\'s metrics compare. Highlight specific strengths and weaknesses derived from the input data that significantly influence the valuation. The analysis should be structured with clear subheadings for better readability (e.g., "Valuation Drivers", "Key Metrics Impact", "Financial Health", "Unit Economics", "Operational Efficiency", "Capital & Product", "Contextual Factors", "Valuation Multiples & Conclusion").'),
 });
 export type ValuationEstimationOutput = z.infer<typeof ValuationEstimationOutputSchema>;
 
@@ -103,6 +103,7 @@ const valuationEstimationPrompt = ai.definePrompt({
   input: {schema: ValuationEstimationInputSchema},
   output: {schema: ValuationEstimationOutputSchema},
   prompt: `You are an expert SaaS company valuation analyst providing a professional, in-depth valuation. Given the following detailed metrics, estimate a valuation range (low, high, and average) for the company in USD. Provide a comprehensive qualitative analysis supporting your valuation and calculate the implied ARR multiple.
+Leverage every piece of provided optional data to enrich your analysis. The more data provided by the user, the more nuanced and specific your analysis should be. Discuss how the absence of optional data might limit the analysis or introduce broader assumptions.
 
 Company Details & Metrics:
 {{#if softwareName}}- Software Name: {{{softwareName}}}{{/if}}
@@ -177,7 +178,7 @@ Contextual Information:
 {{#if customerGeographicConcentration}}- Customer Geographic Concentration: {{{customerGeographicConcentration}}} (Optional){{/if}}
 
 Analysis Instructions:
-Your analysis should be detailed and professional, covering:
+Your analysis should be detailed and professional, structured with clear subheadings for readability (e.g., "Valuation Drivers", "Key Metrics Impact", "Financial Health", "Unit Economics", "Operational Efficiency", "Capital & Product", "Contextual Factors", "Valuation Multiples & Conclusion"). Cover the following:
 1.  **Overall Valuation Rationale**: Explain the primary drivers for the estimated valuation range. Refer to the company by its name if provided.
 2.  **Impact of Key Metrics**:
     *   **ARR Size & Growth**: Contextualize ARR. Analyze current growth (New Business vs. Expansion) and NRR. If historical data is provided, discuss growth trends, consistency, and trajectory. High, efficient, and sustainable growth (strong NRR, good expansion) is critical.
@@ -187,12 +188,13 @@ Your analysis should be detailed and professional, covering:
     *   **Team & Operational Scale**: If employee data provided (total, sales, marketing, R&D), comment on operational leverage, efficiency (e.g., ARR per employee), and capacity for growth.
     *   **Capital Position & Efficiency**: If cash burn, runway, debt, or equity structure details provided, discuss financial health, runway risk, impact of debt on valuation, and potential implications of equity structure (e.g., liquidation preferences).
     *   **Product Engagement**: If DAU/MAU or feature adoption rates provided, comment on user engagement and product stickiness.
-    *   **Contextual Factors**: Briefly discuss how funding stage, industry vertical, target market, and geographic concentration might influence valuation expectations and applicable multiples.
+    *   **Contextual Factors**: Discuss how funding stage, industry vertical, target market, and geographic concentration influence valuation expectations and applicable multiples.
 3.  **Valuation Multiples**: Calculate and include the implied ARR multiple (Average Valuation / ARR). Discuss typical ARR multiples for companies with similar profiles (considering all provided data points: growth, profitability, market, etc.) to justify this multiple. Explain how the detailed financial and operational picture might affect this multiple compared to a simple ARR-based view.
 4.  **Strengths & Weaknesses**: Explicitly list 2-3 key strengths and 2-3 key weaknesses derived from the input data that significantly influence the valuation.
+5.  **Limitations and Assumptions**: If significant optional data is missing, briefly note how this could impact the precision of the valuation and what general assumptions were made.
 
 Output Format:
-Format your output as a JSON object with the following keys: lowValuation, highValuation, averageValuation, impliedARRMultiple, analysis. All currency values should be in USD. The impliedARRMultiple should be a number. The analysis should be a comprehensive, well-structured string.
+Format your output as a JSON object with the following keys: lowValuation, highValuation, averageValuation, impliedARRMultiple, analysis. All currency values should be in USD. The impliedARRMultiple should be a number. The analysis should be a comprehensive, well-structured string with the specified subheadings.
 `,
 });
 
@@ -203,11 +205,9 @@ const valuationEstimationFlow = ai.defineFlow(
     outputSchema: ValuationEstimationOutputSchema,
   },
   async input => {
-    // Basic input validation or transformation can happen here if needed
-    // For example, ensuring historicalFinancials is an array if passed.
     const augmentedInput = {
       ...input,
-      historicalFinancials: input.historicalFinancials || [], // Ensure it's an array
+      historicalFinancials: input.historicalFinancials?.filter(hf => hf.year) || [], 
     };
 
     const {output} = await valuationEstimationPrompt(augmentedInput);
@@ -215,11 +215,12 @@ const valuationEstimationFlow = ai.defineFlow(
       throw new Error('The AI failed to generate a valuation estimation.');
     }
     
-    if (output.averageValuation && input.arr && (output.impliedARRMultiple === undefined || output.impliedARRMultiple === null || isNaN(output.impliedARRMultiple))) {
+    if (output.averageValuation && input.arr) {
         output.impliedARRMultiple = input.arr !== 0 ? parseFloat((output.averageValuation / input.arr).toFixed(2)) : 0;
-    } else if (output.impliedARRMultiple) {
-        output.impliedARRMultiple = parseFloat(output.impliedARRMultiple.toFixed(2));
+    } else {
+        output.impliedARRMultiple = output.impliedARRMultiple ? parseFloat(output.impliedARRMultiple.toFixed(2)) : 0;
     }
+    
     return output;
   }
 );

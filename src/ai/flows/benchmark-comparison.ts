@@ -33,7 +33,7 @@ const BenchmarkComparisonInputSchema = z.object({
   grossMargin: z.number().describe('Current gross margin (as a decimal, e.g., 0.8 for 80%).'),
   
   // Historical Financial Data (Optional)
-  historicalFinancials: z.array(HistoricalFinancialItemSchema).max(5).optional().describe('Optional: Array of historical financial data for up to 5 previous years.'),
+  historicalFinancials: z.array(HistoricalFinancialItemSchema).max(5, "Please provide data for up to the last 5 years.").optional().describe('Optional: Array of historical financial data for up to 5 previous years.'),
 
   // Detailed P&L / Operational Costs (Optional)
   costOfGoodsSold: z.coerce.number().min(0).optional().describe('Optional: Annual Cost of Goods Sold (COGS) in USD.'),
@@ -87,7 +87,7 @@ const BenchmarkComparisonInputSchema = z.object({
 export type BenchmarkComparisonInput = z.infer<typeof BenchmarkComparisonInputSchema>;
 
 const BenchmarkComparisonOutputSchema = z.object({
-  benchmarkAnalysis: z.string().describe('A concise qualitative analysis comparing the company to typical industry benchmarks for key metrics (current metrics, historical trends if available, P&L structure, unit economics, pricing/sales efficiency, team size, capital efficiency, product engagement) and overall valuation, considering its context (funding stage, industry, target market, geography). Mention if metrics are above, below, or in line with general expectations for a SaaS company with the given profile, and how this impacts valuation.'),
+  benchmarkAnalysis: z.string().describe('A comprehensive qualitative analysis comparing the company to typical industry benchmarks and its likely peer group for key metrics (current metrics, historical trends if available, P&L structure, unit economics, pricing/sales efficiency, team size, capital efficiency, product engagement) and overall valuation, considering its context (funding stage, industry, target market, geography). Mention if metrics are above, below, or in line with general expectations for a SaaS company with the given profile, and how this impacts valuation. The analysis should be structured with clear subheadings (e.g., "Executive Summary of Benchmarking", "Financial Performance vs Peers", "Operational Efficiency vs Peers", "Market Positioning & Growth Potential").'),
   strengthAreas: z.array(z.string()).describe('A list of 2-4 key strengths based on the benchmark comparison (e.g., "NRR significantly above average for its funding stage and target market, indicating strong customer value and expansion.").'),
   improvementAreas: z.array(z.string()).describe('A list of 2-4 key areas for improvement based on the benchmark comparison (e.g., "CAC is higher than typical for companies in the specified industry vertical targeting SMBs, suggesting a need to optimize acquisition channels or pricing strategy.").'),
 });
@@ -101,7 +101,9 @@ const benchmarkComparisonPrompt = ai.definePrompt({
   name: 'benchmarkComparisonPrompt',
   input: {schema: BenchmarkComparisonInputSchema},
   output: {schema: BenchmarkComparisonOutputSchema},
-  prompt: `You are a seasoned SaaS industry analyst. Your task is to provide an in-depth competitive benchmark analysis for a SaaS company based on the following metrics and its AI-estimated valuation.
+  prompt: `You are a seasoned SaaS industry analyst. Your task is to provide an in-depth, professional competitive benchmark analysis for a SaaS company based on the following metrics and its AI-estimated valuation.
+Your analysis should be highly detailed and professional. Use all available data points, including optional ones, to draw comparisons and provide insights. Specifically, compare the company to its likely peer group based on its funding stage, industry vertical, target market, and ARR scale. Explain how it stands relative to these peers.
+If significant optional data is missing, briefly note how this could limit the precision of the benchmark analysis and what general assumptions were made.
 
 Company Details & Metrics:
 {{#if softwareName}}- Software Name: {{{softwareName}}}{{/if}}
@@ -177,7 +179,7 @@ Contextual Information:
 {{#if customerGeographicConcentration}}- Customer Geographic Concentration: {{{customerGeographicConcentration}}} (Optional){{/if}}
 
 Instructions:
-1.  **Overall Benchmark Analysis**: Provide a concise qualitative analysis comparing the company's key metrics and its estimated valuation against typical industry benchmarks for SaaS companies. Consider its funding stage, industry, target market, and geography if provided. If a software name is provided, refer to the company by name.
+1.  **Overall Benchmark Analysis**: Provide a comprehensive qualitative analysis comparing the company's key metrics and its estimated valuation against typical industry benchmarks and its likely peer group (defined by stage, industry, market, ARR scale). Structure this analysis with clear subheadings (e.g., "Executive Summary of Benchmarking", "Financial Performance vs Peers", "Operational Efficiency vs Peers", "Market Positioning & Growth Potential"). If a software name is provided, refer to the company by name.
     For each relevant area, state whether metrics are generally strong, average, or an area for concern compared to general expectations for its profile:
     *   **Current Financials**: ARR, Growth components (NewBiz, Expansion), NRR, Churn, Gross Margin.
     *   **Historical Trends** (if provided): Consistency of growth, margin evolution, profitability trends.
@@ -191,6 +193,7 @@ Instructions:
 Explain how these factors collectively influence its valuation relative to peers.
 2.  **Strength Areas**: Identify 2-4 key strength areas based on the benchmark comparison. These should be metrics or aspects where the company performs notably well compared to general industry expectations for its profile.
 3.  **Improvement Areas**: Identify 2-4 key areas where the company could improve relative to benchmarks. These should be actionable or highlight potential risks.
+4.  **Limitations and Assumptions**: If significant optional data is missing, briefly note how this could impact the precision of the benchmark and what general assumptions were made.
 
 Focus on providing insights that would be valuable to founders or investors. Be realistic and acknowledge that benchmarks can vary significantly. Base your analysis on general SaaS industry knowledge, cross-referencing with typical performance for the company's profile.
 
@@ -207,7 +210,7 @@ const benchmarkComparisonFlow = ai.defineFlow(
   async input => {
     const augmentedInput = {
       ...input,
-      historicalFinancials: input.historicalFinancials || [], // Ensure it's an array
+      historicalFinancials: input.historicalFinancials?.filter(hf => hf.year) || [],
     };
     const {output} = await benchmarkComparisonPrompt(augmentedInput);
     if (!output) {
