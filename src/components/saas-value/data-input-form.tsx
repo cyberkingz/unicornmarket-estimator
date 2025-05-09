@@ -18,13 +18,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Percent, TrendingUp, TrendingDown, Trash2 } from 'lucide-react';
+import { 
+  DollarSign, Percent, TrendingUp, TrendingDown, Trash2, Users, Briefcase, Target, FileText, Cpu, ShoppingCart, Handshake
+} from 'lucide-react';
 
 const formSchema = z.object({
   arr: z.coerce.number().positive({ message: 'ARR must be a positive number.' }).describe('Annual Recurring Revenue (USD)'),
-  growthRate: z.coerce.number().min(0, { message: 'Growth rate cannot be negative.' }).max(5, { message: 'Growth rate seems too high (max 500%). Use decimal, e.g., 0.2 for 20%.' }).describe('Year-over-year growth rate (e.g., 0.2 for 20%)'),
+  newBusinessARRGrowthRate: z.coerce.number().min(0, { message: 'New business ARR growth rate cannot be negative.' }).max(5, { message: 'Rate seems too high (max 500%). Use decimal, e.g., 0.2 for 20%.' }).describe('Annual growth rate from new business (e.g., 0.2 for 20%)'),
+  expansionARRGrowthRate: z.coerce.number().min(-1, { message: 'Expansion ARR growth rate can be negative (contraction) but not less than -100%.' }).max(5, { message: 'Rate seems too high (max 500%). Use decimal, e.g., 0.1 for 10%.' }).describe('Annual growth rate from existing customer expansion/upsell (e.g., 0.1 for 10%)'),
   churnRate: z.coerce.number().min(0, { message: 'Churn rate cannot be negative.' }).max(1, { message: 'Churn rate cannot exceed 100%. Use decimal, e.g., 0.05 for 5%.' }).describe('Annual churn rate (e.g., 0.05 for 5%)'),
+  netRevenueRetention: z.coerce.number().min(0, { message: 'NRR cannot be negative.'}).max(3, {message: 'NRR seems too high (max 300%). Use decimal, e.g., 1.1 for 110%.'}).describe('Net Revenue Retention (NRR) as decimal (e.g., 1.1 for 110%)'),
   grossMargin: z.coerce.number().min(0, { message: 'Gross margin cannot be negative.' }).max(1, { message: 'Gross margin cannot exceed 100%. Use decimal, e.g., 0.8 for 80%.' }).describe('Gross margin (e.g., 0.8 for 80%)'),
+  customerAcquisitionCost: z.coerce.number().positive({ message: 'CAC must be a positive number.' }).describe('Average Customer Acquisition Cost (CAC) in USD'),
+  ltvToCacRatio: z.coerce.number().positive({ message: 'LTV/CAC ratio must be a positive number.' }).describe('Customer Lifetime Value (LTV) to CAC ratio (e.g., 3 for 3:1)'),
+  salesMarketingSpendPercentage: z.coerce.number().min(0, { message: 'S&M spend % cannot be negative.' }).max(1, { message: 'S&M spend % cannot exceed 100%. Use decimal, e.g., 0.4 for 40%.' }).describe('Sales & Marketing spend as % of ARR (e.g., 0.4 for 40%)'),
+  researchDevelopmentSpendPercentage: z.coerce.number().min(0, { message: 'R&D spend % cannot be negative.' }).max(1, { message: 'R&D spend % cannot exceed 100%. Use decimal, e.g., 0.2 for 20%.' }).describe('Research & Development spend as % of ARR (e.g., 0.2 for 20%)'),
+  fundingStage: z.string().optional().describe('Current funding stage (e.g., Bootstrap, Seed, Series A)'),
+  industryVertical: z.string().optional().describe('Primary industry vertical (e.g., FinTech, HealthTech)'),
+  targetMarket: z.string().optional().describe('Primary target market segment (e.g., SMB, Mid-Market, Enterprise)'),
 });
 
 type DataInputFormProps = {
@@ -37,9 +48,18 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
     resolver: zodResolver(formSchema),
     defaultValues: {
       arr: 1000000,
-      growthRate: 0.3,
+      newBusinessARRGrowthRate: 0.20,
+      expansionARRGrowthRate: 0.10,
       churnRate: 0.1,
+      netRevenueRetention: 1.05,
       grossMargin: 0.75,
+      customerAcquisitionCost: 5000,
+      ltvToCacRatio: 3.5,
+      salesMarketingSpendPercentage: 0.40,
+      researchDevelopmentSpendPercentage: 0.20,
+      fundingStage: 'Series A',
+      industryVertical: 'General SaaS',
+      targetMarket: 'Mid-Market',
     },
   });
 
@@ -55,79 +75,246 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
     <Card className="shadow-lg rounded-xl">
       <CardHeader>
         <CardTitle className="text-2xl font-semibold">Company Metrics</CardTitle>
-        <CardDescription>Enter your SaaS company's key financial metrics to estimate its valuation.</CardDescription>
+        <CardDescription>Enter your SaaS company's key financial and operational metrics to estimate its valuation.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="arr"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Annual Recurring Revenue (ARR)</FormLabel>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 1000000" {...field} className="pl-10" aria-label="Annual Recurring Revenue" />
-                    </FormControl>
-                  </div>
-                  <FormDescription>Your company's total ARR in USD.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="growthRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Year-over-Year Growth Rate</FormLabel>
-                   <div className="relative">
-                    <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 0.3 for 30%" {...field} className="pl-10" aria-label="Year-over-Year Growth Rate"/>
-                    </FormControl>
-                  </div>
-                  <FormDescription>Annual growth rate as a decimal (e.g., 0.3 for 30%).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="churnRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Annual Churn Rate</FormLabel>
-                  <div className="relative">
-                    <TrendingDown className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 0.1 for 10%" {...field} className="pl-10" aria-label="Annual Churn Rate" />
-                    </FormControl>
-                  </div>
-                  <FormDescription>Annual customer/revenue churn rate as a decimal (e.g., 0.1 for 10%).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="grossMargin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Gross Margin</FormLabel>
-                  <div className="relative">
-                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 0.8 for 80%" {...field} className="pl-10" aria-label="Gross Margin" />
-                    </FormControl>
-                  </div>
-                  <FormDescription>Gross profit margin as a decimal (e.g., 0.8 for 80%).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+              {/* Financial Metrics */}
+              <FormField
+                control={form.control}
+                name="arr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Annual Recurring Revenue (ARR)</FormLabel>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 1000000" {...field} className="pl-10" aria-label="Annual Recurring Revenue" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Your company's total ARR in USD.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grossMargin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Gross Margin</FormLabel>
+                    <div className="relative">
+                      <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.8 for 80%" {...field} className="pl-10" aria-label="Gross Margin" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Gross profit margin as a decimal (e.g., 0.8 for 80%).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Growth Metrics */}
+              <FormField
+                control={form.control}
+                name="newBusinessARRGrowthRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">New Business ARR Growth Rate</FormLabel>
+                    <div className="relative">
+                      <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.2 for 20%" {...field} className="pl-10" aria-label="New Business ARR Growth Rate"/>
+                      </FormControl>
+                    </div>
+                    <FormDescription>Annual growth from new customers (decimal, e.g., 0.2 for 20%).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="expansionARRGrowthRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Expansion ARR Growth Rate</FormLabel>
+                    <div className="relative">
+                      <Handshake className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.1 for 10%" {...field} className="pl-10" aria-label="Expansion ARR Growth Rate"/>
+                      </FormControl>
+                    </div>
+                    <FormDescription>Annual growth from existing customers (upsell/expansion, decimal).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Retention Metrics */}
+              <FormField
+                control={form.control}
+                name="churnRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Annual Churn Rate</FormLabel>
+                    <div className="relative">
+                      <TrendingDown className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.1 for 10%" {...field} className="pl-10" aria-label="Annual Churn Rate" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Annual customer/revenue churn rate as a decimal (e.g., 0.1 for 10%).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="netRevenueRetention"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Net Revenue Retention (NRR)</FormLabel>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 1.1 for 110%" {...field} className="pl-10" aria-label="Net Revenue Retention" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>NRR or DBNER as a decimal (e.g., 1.1 for 110%).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Unit Economics */}
+               <FormField
+                control={form.control}
+                name="customerAcquisitionCost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Customer Acquisition Cost (CAC)</FormLabel>
+                    <div className="relative">
+                      <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 5000" {...field} className="pl-10" aria-label="Customer Acquisition Cost" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Average CAC in USD.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ltvToCacRatio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">LTV to CAC Ratio</FormLabel>
+                    <div className="relative">
+                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="e.g., 3.5" {...field} className="pl-10" aria-label="LTV to CAC Ratio" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Customer Lifetime Value to CAC ratio (e.g., 3 for 3:1).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Spend Efficiency */}
+              <FormField
+                control={form.control}
+                name="salesMarketingSpendPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Sales & Marketing Spend (% ARR)</FormLabel>
+                    <div className="relative">
+                      <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.4 for 40%" {...field} className="pl-10" aria-label="Sales & Marketing Spend Percentage" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>S&M spend as % of ARR (decimal).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="researchDevelopmentSpendPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">R&D Spend (% ARR)</FormLabel>
+                    <div className="relative">
+                      <Cpu className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 0.2 for 20%" {...field} className="pl-10" aria-label="Research & Development Spend Percentage" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>R&D spend as % of ARR (decimal).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Contextual Information */}
+              <FormField
+                control={form.control}
+                name="fundingStage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Funding Stage (Optional)</FormLabel>
+                     <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="text" placeholder="e.g., Series A, Bootstrap" {...field} className="pl-10" aria-label="Funding Stage" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Your company's current funding stage.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="industryVertical"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Industry Vertical (Optional)</FormLabel>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="text" placeholder="e.g., FinTech, HealthTech" {...field} className="pl-10" aria-label="Industry Vertical" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Primary industry your company operates in.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="targetMarket"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel className="text-base">Target Market (Optional)</FormLabel>
+                    <div className="relative">
+                      <Target className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="text" placeholder="e.g., SMB, Mid-Market, Enterprise" {...field} className="pl-10" aria-label="Target Market" />
+                      </FormControl>
+                    </div>
+                    <FormDescription>Primary customer segment.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button 
                 type="button" 
@@ -163,3 +350,4 @@ export default function DataInputForm({ onSubmit, isLoading }: DataInputFormProp
     </Card>
   );
 }
+

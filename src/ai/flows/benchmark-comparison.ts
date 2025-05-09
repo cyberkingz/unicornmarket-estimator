@@ -13,17 +13,26 @@ import {z} from 'genkit';
 
 const BenchmarkComparisonInputSchema = z.object({
   arr: z.number().describe('Annual Recurring Revenue (ARR) in USD.'),
-  growthRate: z.number().describe('Year-over-year growth rate (as a decimal, e.g., 0.3 for 30%).'),
-  churnRate: z.number().describe('Annual churn rate (as a decimal, e.g., 0.1 for 10%).'),
+  newBusinessARRGrowthRate: z.coerce.number().min(0).max(5).describe('Annual growth rate from new business (e.g., 0.25 for 25%).'),
+  expansionARRGrowthRate: z.coerce.number().min(-1).max(5).describe('Annual growth rate from existing customer expansion/upsell (e.g., 0.1 for 10%). Can be negative for contraction.'),
+  churnRate: z.number().describe('Annual churn rate (as a decimal, e.g., 0.05 for 10%).'),
+  netRevenueRetention: z.coerce.number().min(0).max(3).describe('Net Revenue Retention (NRR) or Dollar-Based Net Expansion Rate (DBNER) as a decimal (e.g., 1.1 for 110%).'),
   grossMargin: z.number().describe('Gross margin (as a decimal, e.g., 0.8 for 80%).'),
+  customerAcquisitionCost: z.coerce.number().positive().describe('Average Customer Acquisition Cost (CAC) in USD.'),
+  ltvToCacRatio: z.coerce.number().positive().describe('Customer Lifetime Value (LTV) to CAC ratio (e.g., 3 for 3:1).'),
+  salesMarketingSpendPercentage: z.coerce.number().min(0).max(1).describe('Sales & Marketing spend as a percentage of ARR (e.g., 0.4 for 40%).'),
+  researchDevelopmentSpendPercentage: z.coerce.number().min(0).max(1).describe('Research & Development spend as a percentage of ARR (e.g., 0.2 for 20%).'),
+  fundingStage: z.string().optional().describe('Current funding stage (e.g., Bootstrap, Seed, Series A, Growth Stage, Public).'),
+  industryVertical: z.string().optional().describe('Primary industry vertical (e.g., FinTech, HealthTech, Enterprise SaaS, MarTech).'),
+  targetMarket: z.string().optional().describe('Primary target market segment (e.g., SMB, Mid-Market, Enterprise).'),
   estimatedAverageValuation: z.number().describe('The AI-estimated average valuation of the company in USD.'),
 });
 export type BenchmarkComparisonInput = z.infer<typeof BenchmarkComparisonInputSchema>;
 
 const BenchmarkComparisonOutputSchema = z.object({
-  benchmarkAnalysis: z.string().describe('A concise qualitative analysis comparing the company to typical industry benchmarks for key metrics (ARR, Growth, Churn, Gross Margin) and overall valuation. Mention if metrics are above, below, or in line with general expectations for a SaaS company with the given ARR, and how this impacts valuation.'),
-  strengthAreas: z.array(z.string()).describe('A list of key strengths based on the benchmark comparison (e.g., "Growth rate significantly above average for ARR level").'),
-  improvementAreas: z.array(z.string()).describe('A list of key areas for improvement based on the benchmark comparison (e.g., "Churn rate is higher than typical for well-performing SaaS companies").'),
+  benchmarkAnalysis: z.string().describe('A concise qualitative analysis comparing the company to typical industry benchmarks for key metrics (ARR, Growth components, NRR, Churn, Gross Margin, CAC, LTV/CAC, S&M/R&D Spend) and overall valuation, considering its context (funding stage, industry, target market). Mention if metrics are above, below, or in line with general expectations for a SaaS company with the given profile, and how this impacts valuation.'),
+  strengthAreas: z.array(z.string()).describe('A list of 2-4 key strengths based on the benchmark comparison (e.g., "NRR significantly above average for its funding stage and target market").'),
+  improvementAreas: z.array(z.string()).describe('A list of 2-4 key areas for improvement based on the benchmark comparison (e.g., "CAC is higher than typical for companies in the specified industry vertical targeting SMBs").'),
 });
 export type BenchmarkComparisonOutput = z.infer<typeof BenchmarkComparisonOutputSchema>;
 
@@ -35,21 +44,30 @@ const benchmarkComparisonPrompt = ai.definePrompt({
   name: 'benchmarkComparisonPrompt',
   input: {schema: BenchmarkComparisonInputSchema},
   output: {schema: BenchmarkComparisonOutputSchema},
-  prompt: `You are a seasoned SaaS industry analyst. Your task is to provide a competitive benchmark analysis for a SaaS company based on the following metrics and its AI-estimated valuation.
+  prompt: `You are a seasoned SaaS industry analyst. Your task is to provide an in-depth competitive benchmark analysis for a SaaS company based on the following metrics and its AI-estimated valuation.
 
 Company Metrics:
 - Annual Recurring Revenue (ARR): {{{arr}}} USD
-- Year-over-Year Growth Rate: {{{growthRate}}} (decimal format)
-- Annual Churn Rate: {{{churnRate}}} (decimal format)
-- Gross Margin: {{{grossMargin}}} (decimal format)
+- New Business ARR Growth Rate (annual): {{{newBusinessARRGrowthRate}}}
+- Expansion ARR Growth Rate (annual): {{{expansionARRGrowthRate}}}
+- Annual Churn Rate: {{{churnRate}}}
+- Net Revenue Retention (NRR/DBNER): {{{netRevenueRetention}}}
+- Gross Margin: {{{grossMargin}}}
+- Customer Acquisition Cost (CAC): {{{customerAcquisitionCost}}} USD
+- LTV to CAC Ratio: {{{ltvToCacRatio}}}
+- Sales & Marketing Spend (% of ARR): {{{salesMarketingSpendPercentage}}}
+- Research & Development Spend (% of ARR): {{{researchDevelopmentSpendPercentage}}}
+{{#if fundingStage}}- Funding Stage: {{{fundingStage}}}{{/if}}
+{{#if industryVertical}}- Industry Vertical: {{{industryVertical}}}{{/if}}
+{{#if targetMarket}}- Target Market: {{{targetMarket}}}{{/if}}
 - Estimated Average Valuation: {{{estimatedAverageValuation}}} USD
 
 Instructions:
-1.  **Overall Benchmark Analysis**: Provide a concise qualitative analysis comparing the company's key metrics (ARR size context, Growth Rate, Churn Rate, Gross Margin) and its estimated valuation against typical industry benchmarks for SaaS companies. For each metric, state whether it's generally considered strong, average, or an area for concern for a company of this ARR level. Explain how these factors collectively influence its valuation.
-2.  **Strength Areas**: Identify 2-3 key strength areas. These should be metrics or aspects where the company performs notably well compared to general industry expectations.
-3.  **Improvement Areas**: Identify 2-3 key areas where the company could improve relative to benchmarks. These should be actionable or highlight potential risks.
+1.  **Overall Benchmark Analysis**: Provide a concise qualitative analysis comparing the company's key metrics (ARR, New/Expansion Growth, NRR, Churn, Gross Margin, CAC, LTV/CAC, S&M Spend, R&D Spend) and its estimated valuation against typical industry benchmarks for SaaS companies, considering its funding stage, industry, and target market if provided. For each metric, state whether it's generally strong, average, or an area for concern. Explain how these factors collectively influence its valuation relative to peers.
+2.  **Strength Areas**: Identify 2-4 key strength areas. These should be metrics or aspects where the company performs notably well compared to general industry expectations for its profile.
+3.  **Improvement Areas**: Identify 2-4 key areas where the company could improve relative to benchmarks. These should be actionable or highlight potential risks.
 
-Focus on providing insights that would be valuable to founders or investors. Be realistic and acknowledge that benchmarks can vary. Base your analysis on general SaaS industry knowledge.
+Focus on providing insights that would be valuable to founders or investors. Be realistic and acknowledge that benchmarks can vary significantly. Base your analysis on general SaaS industry knowledge, cross-referencing with typical performance for the company's profile (stage, industry, market).
 
 Format your output as a JSON object with the keys: "benchmarkAnalysis", "strengthAreas", and "improvementAreas".
 `,
@@ -69,3 +87,4 @@ const benchmarkComparisonFlow = ai.defineFlow(
     return output;
   }
 );
+

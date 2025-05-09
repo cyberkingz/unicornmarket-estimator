@@ -41,11 +41,10 @@ export default function SaasValuePage() {
       // Benchmark Comparison
       setIsBenchmarking(true);
       try {
+        // Construct BenchmarkComparisonInput using all fields from ValuationEstimationInput
+        // and the estimatedAverageValuation from its output.
         const benchmarkInput: BenchmarkComparisonInput = {
-          arr: data.arr,
-          growthRate: data.growthRate,
-          churnRate: data.churnRate,
-          grossMargin: data.grossMargin,
+          ...data, // Includes all new fields: arr, newBizGrowth, expansionGrowth, churn, nrr, grossMargin, cac, ltvCac, s&m, r&d, stage, industry, market
           estimatedAverageValuation: valuationData.averageValuation,
         };
         const benchmarkOut = await benchmarkComparison(benchmarkInput);
@@ -102,11 +101,18 @@ export default function SaasValuePage() {
                 <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-1" data-ai-hint="text placeholder" />
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                   <div className="p-4 border rounded-lg"><Skeleton className="h-6 w-1/2 mx-auto mb-2" data-ai-hint="label placeholder" /><Skeleton className="h-10 w-3/4 mx-auto" data-ai-hint="value placeholder" /></div>
                   <div className="p-4 border rounded-lg"><Skeleton className="h-6 w-1/2 mx-auto mb-2" data-ai-hint="label placeholder" /><Skeleton className="h-12 w-full mx-auto" data-ai-hint="value placeholder" /></div>
                   <div className="p-4 border rounded-lg"><Skeleton className="h-6 w-1/2 mx-auto mb-2" data-ai-hint="label placeholder" /><Skeleton className="h-10 w-3/4 mx-auto" data-ai-hint="value placeholder" /></div>
+                </div>
+                <div className="text-center">
+                    <div className="inline-block p-4 rounded-lg shadow max-w-xs mx-auto border">
+                        <Skeleton className="h-6 w-3/4 mx-auto mb-2" data-ai-hint="label placeholder" />
+                        <Skeleton className="h-10 w-1/2 mx-auto" data-ai-hint="value placeholder" />
+                        <Skeleton className="h-3 w-1/3 mx-auto mt-1" data-ai-hint="description placeholder" />
+                    </div>
                 </div>
                  <div className="text-center text-muted-foreground mt-4">
                   <Skeleton className="h-4 w-3/4 mx-auto" data-ai-hint="loading message" />
@@ -135,6 +141,7 @@ export default function SaasValuePage() {
               lowValuation={valuationResult.lowValuation}
               highValuation={valuationResult.highValuation}
               averageValuation={valuationResult.averageValuation}
+              impliedARRMultiple={valuationResult.impliedARRMultiple}
             />
             <AnalysisDisplay analysis={valuationResult.analysis} />
           </div>
@@ -177,3 +184,4 @@ export default function SaasValuePage() {
     </div>
   );
 }
+
