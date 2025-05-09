@@ -108,8 +108,12 @@ export default function SaasValuePage() {
                   <div className="p-4 border rounded-lg"><Skeleton className="h-6 w-1/2 mx-auto mb-2" data-ai-hint="label placeholder" /><Skeleton className="h-10 w-3/4 mx-auto" data-ai-hint="value placeholder" /></div>
                 </div>
                 <div className="text-center">
-                    <div className="inline-block p-4 rounded-lg shadow max-w-xs mx-auto border">
-                        <Skeleton className="h-6 w-3/4 mx-auto mb-2" data-ai-hint="label placeholder" />
+                    {/* Skeleton for Implied ARR Multiple Card */}
+                    <div className="inline-block p-4 rounded-lg shadow-sm max-w-xs mx-auto border border-border bg-card/50">
+                        <div className="flex items-center justify-center mb-2">
+                            <Skeleton className="h-5 w-5 mr-2" data-ai-hint="icon placeholder" />
+                            <Skeleton className="h-6 w-3/4" data-ai-hint="label placeholder" />
+                        </div>
                         <Skeleton className="h-10 w-1/2 mx-auto" data-ai-hint="value placeholder" />
                         <Skeleton className="h-3 w-1/3 mx-auto mt-1" data-ai-hint="description placeholder" />
                     </div>
@@ -184,4 +188,3 @@ export default function SaasValuePage() {
     </div>
   );
 }
-
